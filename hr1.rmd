@@ -1,0 +1,185 @@
+---
+author: "周俊德"
+date: "`r Sys.time()`"
+output: 
+  html_document:
+    highlight: pygments
+    theme: flatly
+    css: style.css
+title: "demo"
+---
+
+<br><hr>
+
+```{r}
+load("a.rdata")
+library(dplyr)
+library(ggplot2)
+library(caTools)
+library(Matrix)
+library(slam)
+library(reshape2)
+library(d3heatmap)
+library(googleVis)
+library(chorddiag)
+```
+
+<span style="font-size:24px"> `r "\U1F4A1"` : </span>
+市場行情
+```{r}
+# str(M)
+# table(M[-(1:2),]$Function) %>% n_distinct() 
+# M[-(1:2),]$Function %>% unique() %>% as.data.frame() -> Function
+# names(M)[4] <- "Salary"
+# names(M)[10] <- "TGC"
+# names(M)[16] <- "ATC"
+# M$Salary <- as.numeric(M$Salary)
+# M$TGC <- as.numeric(M$TGC)
+# M$ATC <- as.numeric(M$ATC)
+```
+<br>
+
+<span style="font-size:24px"> `r "\U1F4A1"` : </span>
+市場資料 薪資與Z_Grade關係
+```{r}
+M[c(3:1514),] %>% ggplot(aes(x=X__2,y=Salary))+geom_point(color = "Green") + scale_y_continuous(labels = scales::comma) + labs(x="Z_Grade")
+```
+<br>
+
+<span style="font-size:24px"> `r "\U1F4A1"` : </span>
+市場資料 TGC與Z_Grade關係
+```{r}
+M[c(3:1514),] %>% ggplot(aes(x=X__2,y=TGC))+geom_point(color = "Blue") + scale_y_continuous(labels = scales::comma) + labs(x="Z_Grade")
+```
+<br>
+
+<span style="font-size:24px"> `r "\U1F4A1"` : </span>
+市場資料 ATC與Z_Grade關係
+```{r}
+M[c(3:1514),] %>% ggplot(aes(x=X__2,y=ATC))+geom_point() + scale_y_continuous(labels = scales::comma) + labs(x="Z_Grade")
+### is.na(M$X__2) %>% table()
+### is.na(M$BaseSalary) %>% table()
+
+names(M)[1] <- "Function"
+# M[c(3:1514),] %>% ggplot(aes(x=factor(X__2),y=Salary,col=Function,group=Function)) + geom_line() + scale_y_continuous(labels = scales::comma)
+```
+
+<br><hr>
+
+<span style="font-size:24px"> `r "\U1F5FF"` : </span>
+動態泡泡圖
+```{r results='asis', tidy=FALSE}
+### op = options(gvis.plot.tag='chart')
+G = M[c(3:1514),] %>%
+  group_by (Function, X__2) %>%
+  summarise(
+    Salary=mean(Salary),
+    TGC=mean(TGC),
+    ATC=mean(ATC),
+    group_size=n()) %>% ungroup()
+
+names(G)[2] <- "Z_Grade"
+### str(G)
+G$Z_Grade <- as.numeric(G$Z_Grade)
+G$Function <- as.factor(G$Function)
+
+plot(gvisMotionChart(G,"Function",
+                       "Z_Grade",options=list(width=800, height=600)))
+```
+
+
+```{r}
+n_distinct(G$Function)
+```
+
+```{r}
+####Function Name: Consumer Branch Staff Discipline Name : Consumer Finance – Sales and Services Focus
+M[which(M$Function == "Consumer Branch Staff"),] -> M1
+M[which(M$Function == "Middle Market Commercial Banking"),] -> M2
+M1[c(63:73),] -> M1
+
+M1[,c(3,4)] -> a  
+a$name <- "Salary"
+names(a)[2] <- "Money" 
+M1[,c(3,10)] -> a1
+a1$name <- "TGC"
+names(a1)[2] <- "Money" 
+M1[,c(3,16)] -> a2
+a2$name <- "ATC"
+names(a2)[2] <- "Money" 
+rbind(a,a1,a2) -> A
+```
+
+
+<br>
+
+<span style="font-size:24px"> `r "\U1F4A1"` : </span>
+ATC Salary TGC 和 職等之間 的變化 ， 分別有點狀圖和線型圖
+```{r}
+####市場資料Consumer Branch Staff Discipline Name : Consumer Finance – Sales and Services Focus
+M[which(M$Function == "Consumer Branch Staff"),] -> M1
+A %>% ggplot(aes(x=factor(X__2),y=Money,col=name,group=name)) + geom_line() +  scale_y_continuous(labels = scales::comma) + labs(x="Z_Grade") + labs(colour = "factor")
+```
+
+```{r}
+A %>% ggplot(aes(x=factor(X__2),y=Money,col=name,group=name)) + geom_point() +  scale_y_continuous(labels = scales::comma) + labs(x="Z_Grade") + labs(colour = "factor")
+```
+
+
+
+<span style="border:0px red solid;font-size:20px;background-color:orange;">
+ATC Salary TGC 和 職等之間 的變化，分別有點狀圖和線型圖</span><br>
+<span style="font-size:24px"> `r "\U1F5FF"` : </span>
+```{r}
+###Function Name:  Middle Market Commercial Banking
+melt(M2[,c(3,4,10,16)],id="X__2") -> M21
+names(M21)[c(2,3)] <- c("factor","money")
+M21 %>% ggplot(aes(x=factor(X__2),y=money,col=factor,group=factor)) + geom_line() + scale_y_continuous(labels = scales::comma) + labs(x="Z_Grade")
+```
+<br>
+```{r}
+M21 %>% ggplot(aes(x=factor(X__2),y=money,col=factor,group=factor)) + geom_point() + scale_y_continuous(labels = scales::comma) + labs(x="Z_Grade")
+```
+<br><hr>
+
+<span style="font-size:24px"> `r "\U1F5FF"` : </span>
+公司人員
+```{r}
+library(readr)
+names(C)[5] <- "Function"
+names(C)[7] <- "TGC"
+names(C)[8] <- "ATC"
+str(C)
+as.factor(C$C_Grade) -> C$C_Grade
+C <- na.omit(C)
+C %>% ggplot(aes(x=C_Grade,y=TGC,col=Department,group=Department)) + geom_line() + scale_y_continuous(labels = scales::comma)
+```
+
+```{r}
+C %>% ggplot(aes(x=C_Grade,y=ATC,col=Department,group=Department)) + geom_line() + scale_y_continuous(labels = scales::comma)
+```
+<br>
+
+```{r}
+C %>% ggplot(aes(x=C_Grade,y=ATC+TGC,col=Department,group=Department)) + geom_line() + scale_y_continuous(labels = scales::comma)
+```
+
+<br><hr>
+
+<span style="font-size:24px"> `r "\U1F5FF"` : </span>
+各部門平均TGC和ATC 對上 C_Grade的變化
+```{r}
+C %>% group_by(C_Grade,Department) %>% summarise(
+   mean_TGC = mean(TGC),
+   mean_ATC = mean(ATC)
+  ) -> C1
+
+C1 %>% ggplot(aes(x=C_Grade,y=mean_TGC,col=Department,group=Department)) + geom_line() + scale_y_continuous(labels = scales::comma)
+```
+<br>
+
+```{r}
+C1 %>% ggplot(aes(x=C_Grade,y=mean_ATC,col=Department,group=Department)) + geom_line() + scale_y_continuous(labels = scales::comma)
+```
+
+<br>
