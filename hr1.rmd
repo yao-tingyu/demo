@@ -15,13 +15,12 @@ title: "demo"
 load("a.rdata")
 library(dplyr)
 library(ggplot2)
-library(caTools)
+# library(caTools)
 library(Matrix)
 library(slam)
 library(reshape2)
-library(d3heatmap)
 library(googleVis)
-library(chorddiag)
+### library(chorddiag)
 ```
 
 <span style="font-size:24px"> `r "\U1F4A1"` : </span>
@@ -69,7 +68,7 @@ names(M)[1] <- "Function"
 <span style="font-size:24px"> `r "\U1F5FF"` : </span>
 動態泡泡圖
 ```{r results='asis', tidy=FALSE}
-### op = options(gvis.plot.tag='chart')
+op = options(gvis.plot.tag='chart')
 G = M[c(3:1514),] %>%
   group_by (Function, X__2) %>%
   summarise(
